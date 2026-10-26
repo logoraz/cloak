@@ -149,11 +149,19 @@ named by the theme's :css, then the CSS file at STYLE. STYLE may be nil."
   (setf (gtk:property (gtk:settings-default) "gtk-cursor-theme-name")
         (cfg:config-ref config :theme :cursor)))
 
+(defun apply-scheme (config)
+  "Set the dark or light look of GTK from the theme in CONFIG, through the
+settings of the default display. Call this once the display is open."
+  (setf (gtk:property (gtk:settings-default)
+                      "gtk-application-prefer-dark-theme")
+        (eq (cfg:config-ref config :theme :scheme) :dark)))
+
 (defun apply-theme (config style)
   "Apply the theme in CONFIG: its CSS, the CSS file at STYLE, which may be
-nil, and its cursor theme. Call this once the display is open."
+nil, its cursor theme, and its scheme. Call this once the display is open."
   (apply-css config style)
-  (apply-cursor config))
+  (apply-cursor config)
+  (apply-scheme config))
 
 (defun style-window (window)
   "Give WINDOW the wallpaper and background of the theme. Return WINDOW."

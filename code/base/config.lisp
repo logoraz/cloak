@@ -25,6 +25,9 @@
                 :css        (:type :path :default nil)
                 :cursor     (:type :string :default "Bibata-Modern-Classic")
                 :font       (:type :string :default "JetBrains Mono")
+                :scheme     (:type :enum
+                             :values (:dark :light)
+                             :default :dark)
                 :wallpaper  (:path (:type :path :default nil)
                              :fit  (:type :enum
                                     :values (:cover :contain :fill)

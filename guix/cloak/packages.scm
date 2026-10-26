@@ -27,7 +27,7 @@
 
 
 (define %version "0.2.0")
-(define %hash "0000000000000000000000000000000000000000000000000000")
+(define %hash "1ry864gwkfc3c0f2i3nf4jpx74n1rpkdplcyrc7sc9dmqh42hqmrc")
 
 (define-public cloak
   (package

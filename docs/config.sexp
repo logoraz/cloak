@@ -17,6 +17,9 @@
          :foreground "#e5e9f0"       ; text color
          :border "#81a1c1"           ; login box border
 
+         ;; Look of the buttons, menus and fields: :dark or :light
+         :scheme :dark
+
          ;; Opacity of the login box only, from 0 (clear) to 1 (solid).
          :alpha 0.85
 

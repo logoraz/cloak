@@ -542,6 +542,16 @@ Return the request strings the mock received, in order."
         (is (equal '("loginctl" "reboot")
                    (cfg:config-ref config :commands :reboot)))))
 
+(test config-scheme-defaults-to-dark
+      "The scheme is dark unless the config says light; a bad one warns."
+      (is (eq :dark (cfg:config-ref (load-text "()") :theme :scheme)))
+      (is (eq :light (cfg:config-ref (load-text "(:theme (:scheme :light))")
+                                     :theme :scheme)))
+      (multiple-value-bind (config warnings)
+          (load-text "(:theme (:scheme :sepia))")
+        (is (eq :dark (cfg:config-ref config :theme :scheme)))
+        (is (search ":theme :scheme" (first warnings)))))
+
 (test config-user-values-win
       "User values replace defaults; other settings keep theirs."
       (multiple-value-bind (config warnings)
