@@ -26,7 +26,7 @@
 ;;; preload gtk4-layer-shell, which has to load before libwayland-client.
 
 
-(define %version "0.1.0")
+(define %version "0.2.0")
 (define %hash "0000000000000000000000000000000000000000000000000000")
 
 (define-public cloak

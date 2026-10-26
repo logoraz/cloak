@@ -689,6 +689,27 @@ Return the request strings the mock received, in order."
         (is (= 1 (length warnings)))
         (is (string= "#81a1c1" (cfg:config-ref config :clock :color)))))
 
+(test config-session-command-defaults-to-nil
+      "With no :session :command, the menu session is used."
+      (let ((config (load-text "()")))
+        (is (null (cfg:config-ref config :session :command)))))
+
+(test config-session-command-value
+      "A command is a list of strings."
+      (multiple-value-bind (config warnings)
+          (load-text "(:session (:command (\"/bin/sway\" \"--debug\")))")
+        (is (null warnings))
+        (is (equal '("/bin/sway" "--debug")
+                   (cfg:config-ref config :session :command)))))
+
+(test config-session-command-invalid-uses-default
+      "A command that is not a list of strings warns and is ignored."
+      (multiple-value-bind (config warnings)
+          (load-text "(:session (:command \"sway\"))")
+        (is (= 1 (length warnings)))
+        (is (null (cfg:config-ref config :session :command)))))
+
+
 ;;; sessions
 
 (defun desktop-entry (name exec &rest extra)

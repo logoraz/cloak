@@ -47,8 +47,9 @@ Then use the service in your operating system:
               (greetd-cloak-sway-session
                (sway-configuration %greetd-conf)
                (cloak-configuration
-                (greeting "Welcome")
-                (theme (cloak-theme (alpha 0.9))))))))))
+                (cloak-configuration
+                 (greeting "Welcome")
+                 (theme (cloak-theme (alpha 0.9))))))))))))
 ```
 
 Fields left unset keep cloak's defaults.

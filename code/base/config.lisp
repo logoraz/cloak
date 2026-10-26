@@ -29,7 +29,8 @@
                              :fit  (:type :enum
                                     :values (:cover :contain :fill)
                                     :default :cover)))
-    :session   (:default (:type :string :default nil))
+    :session   (:default (:type :string :default nil)
+                :command (:type :command :default nil))
     :layout    (:position (:type :enum
                            :values (:center :left :right)
                            :default :center)

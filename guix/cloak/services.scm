@@ -38,8 +38,9 @@
 ;;;                 (greetd-cloak-sway-session
 ;;;                  (sway-configuration %greetd-conf)
 ;;;                  (cloak-configuration
+;;;                   (cloak-configuration
 ;;;                    (greeting "Welcome")
-;;;                    (theme (cloak-theme (alpha 0.9)))))))))))
+;;;                    (theme (cloak-theme (alpha 0.9))))))))))))
 ;;;
 ;;; A field left at #f is left out of cloak.sexp, so the greeter keeps its
 ;;; own default for it.
@@ -54,6 +55,8 @@
 (define (maybe-symbol? x) (or (not x) (symbol? x)))
 (define (maybe-file? x) (or (not x) (string? x) (file-like? x)))
 (define (maybe-command? x) (or (not x) (and (list? x) (every string? x))))
+(define (maybe-program? x)
+  (or (maybe-command? x) (file-like? x)))
 
 (define-configuration/no-serialization cloak-user
   (name (maybe-string #f) "The user selected first, as :user :name.")
@@ -74,7 +77,12 @@
   (wallpaper (cloak-wallpaper (cloak-wallpaper)) "Wallpaper settings."))
 
 (define-configuration/no-serialization cloak-session
-  (name (maybe-string #f) "Session preselected, as :session :default."))
+  (name (maybe-string #f) "Session preselected, as :session :default.")
+  (command (maybe-program #f)
+           "Command to start after every login, instead of the command of
+the session picked in the menu.  Either a list of strings or a file-like
+program, such as a program-file.  The session menu is hidden when it is
+set."))
 
 (define-configuration/no-serialization cloak-layout
   (position (maybe-symbol #f) "One of center, left or right.")
@@ -134,6 +142,15 @@
     ((? file-like?)
      (list (string-append " :" key " \"") value "\""))))
 
+(define (command-entry key value)
+  "Return the pieces of ' :KEY (COMMAND)'.  VALUE is #f, a list of strings,
+or a file-like program, which becomes the one string of its store path."
+  (match value
+    (#f '())
+    ((? file-like?)
+     (list (string-append " :" key " (\"") value "\")"))
+    (_ (entry key value))))
+
 (define (group key . entries)
   "Return the pieces of ' :KEY (ENTRIES)', or no pieces if ENTRIES is empty."
   (let ((body (append-map identity entries)))
@@ -167,7 +184,8 @@
                      (entry "path" (cloak-wallpaper-path wallpaper))
                      (entry "fit" (cloak-wallpaper-fit wallpaper))))
        (group "session"
-              (entry "default" (cloak-session-name session)))
+              (entry "default" (cloak-session-name session))
+              (command-entry "command" (cloak-session-command session)))
        (group "layout"
               (entry "position" (cloak-layout-position layout))
               (entry "primary" (cloak-layout-primary layout)))

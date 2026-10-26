@@ -35,7 +35,11 @@
  ;; The desktop session selected first, by its name in the menu, such as
  ;; "Sway". Sessions come from the .desktop files of the system, so none
  ;; are listed here. After a login, the last session used is selected.
- :session (:default "Sway")                  ; default: none
+ :session (:default "Sway"                   ; default: none
+           ;; A command, as a list of strings, to start after every login
+           ;; instead of the command of the session picked in the menu.
+           ;; When it is set the session menu is hidden.
+           :command ("/path/to/start-wm"))   ; default: none
 
  ;; :primary is the monitor that shows the login form, named as sway
  ;; names it (swaymsg -t get_outputs). With none, or a name that is not

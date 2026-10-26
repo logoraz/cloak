@@ -29,6 +29,7 @@
                 #:widget-halign
                 #:widget-remove-css-class
                 #:widget-sensitive-p
+                #:widget-visible-p
                 #:widget-valign
                 #:window-child
                 #:window-focus)
@@ -296,6 +297,8 @@ unlock them, with the focus on the entry, when it is false."
           (form-clock form) (make-label :str ""))
     (widget-add-css-class box "cloak-form")
     (setf (password-entry-show-peek-icon-p entry) t)
+    (when (cfg:config-ref config :session :command)
+      (setf (widget-visible-p session-picker) nil))
     (setf (widget-halign power) +align-center+)
     (widget-add-css-class (form-clock form) "cloak-clock")
     (setf (widget-halign box) +align-center+
@@ -413,12 +416,20 @@ main event loop."))
     (when form
       (show-status form (second args)))))
 
+(defun session-command (greeter)
+  "Return the command to start, as a vector of strings: the :session
+:command of the config when it is set, else the command of the session the
+user picked."
+  (let ((command (cfg:config-ref (greeter-config greeter)
+                                 :session :command)))
+    (if command
+        (coerce command 'vector)
+        (ses:desktop-session-cmd (cdr (greeter-choice greeter))))))
+
 (defmethod handle-event ((greeter greeter) (kind (eql :ready)) &rest args)
-  "Start the chosen session once greetd accepts the login."
+  "Start the session once greetd accepts the login."
   (declare (ignore args))
-  (lgn:launch (greeter-login greeter)
-              (ses:desktop-session-cmd (cdr (greeter-choice greeter)))
-              #()))
+  (lgn:launch (greeter-login greeter) (session-command greeter) #()))
 
 (defmethod handle-event ((greeter greeter) (kind (eql :started)) &rest args)
   "Finish when greetd reports the session started."
