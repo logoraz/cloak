@@ -134,7 +134,8 @@ BACKGROUND and the text color TEXT."
                (format nil "background-color: ~A" (css-color background alpha))
                (format nil "border: 1px solid ~A" border)
                "border-radius: 10px"
-               "padding: 50px")
+               "padding: 50px"
+               "min-width: 500px")
      (css-rule ".cloak-form label, .cloak-form entry, .cloak-form button"
                (format nil "color: ~A" foreground)
                (format nil "font-family: \"~A\"" (escape-css font)))

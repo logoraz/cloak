@@ -1,6 +1,6 @@
 (defsystem "cloak"
   :description "A configurable GTK4 greetd greeter in Common Lisp."
-  :author "Erik Almaraz"
+  :author "Erik P Almaraz"
   :license "LGPL-2.1-only WITH LLGPL"
   :version (:read-file-form "data/version.sexp" :at (0 1))
   :depends-on ("sb-bsd-sockets"
