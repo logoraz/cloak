@@ -1,0 +1,4 @@
+;;; Guix channel file for cloak; the modules live under guix/cloak/.
+(channel
+ (version 0)
+ (directory "guix"))
