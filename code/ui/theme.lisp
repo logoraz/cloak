@@ -107,12 +107,30 @@ by FIT, :cover, :contain or :fill. Return nil if PATH is nil."
           "background-position: center"
           "background-repeat: no-repeat")))
 
+(defun shade (color factor)
+  "Return the hex COLOR with each of its channels multiplied by FACTOR, a
+number from 0 to 1, as #RRGGBB. A color that is not hex is returned as it
+is."
+  (let ((rgb (hex-color-rgb color)))
+    (if rgb
+        (format nil "#~{~2,'0X~}"
+                (mapcar (lambda (channel) (round (* channel factor))) rgb))
+        color)))
+
 (defun button-rule (selector background text)
-  "Return the CSS rule that gives the buttons matching SELECTOR the color
-BACKGROUND and the text color TEXT."
-  (css-rule selector
-            (format nil "background: ~A" background)
-            (format nil "color: ~A" text)))
+  "Return the CSS rules that give the buttons matching SELECTOR the color
+BACKGROUND and the text color TEXT. The color is a little darker under the
+pointer and darker still while pressed."
+  (concatenate
+   'string
+   (css-rule selector
+             (format nil "background: ~A" background)
+             (format nil "color: ~A" text)
+             "transition: background 150ms")
+   (css-rule (format nil "~A:hover" selector)
+             (format nil "background: ~A" (shade background 0.9)))
+   (css-rule (format nil "~A:active" selector)
+             (format nil "background: ~A" (shade background 0.8)))))
 
 (defun theme-css (config)
   "Return the CSS for the theme in CONFIG, as a string."
@@ -135,7 +153,7 @@ BACKGROUND and the text color TEXT."
                (format nil "border: 1px solid ~A" border)
                "border-radius: 10px"
                "padding: 50px"
-               "min-width: 500px")
+               "min-width: 400px")
      (css-rule ".cloak-form label, .cloak-form entry, .cloak-form button"
                (format nil "color: ~A" foreground)
                (format nil "font-family: \"~A\"" (escape-css font)))
