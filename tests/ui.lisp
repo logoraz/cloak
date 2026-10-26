@@ -85,9 +85,20 @@
                      :clock (:color \"#445566\" :size \"20px\"))"))))
         (is (search "rgba(46, 52, 64, 0.50)" css))
         (is (search "border: 1px solid #112233" css))
-        (is (search ".cloak-form .cloak-clock" css))
+        (is (search ".cloak-clock {" css))
         (is (search "color: #445566" css))
         (is (search "font-size: 20px" css))))
+
+(test theme-css-colors-the-buttons
+      "The CSS colors each button, the greeting and the error notice."
+      (let ((css (thm:theme-css (config-from "()"))))
+        (is (search ".cloak-form button.cloak-login" css))
+        (is (search "background: #5e81ac" css))
+        (is (search "background: #4c566a" css))
+        (is (search "background: #ebcb8b" css))
+        (is (search "background: #bf616a" css))
+        (is (search "color: #d08770" css))
+        (is (search "font-size: 150%" css))))
 
 (test theme-css-wallpaper-is-optional
       "With no wallpaper path there is no background image."

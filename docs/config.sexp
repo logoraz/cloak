@@ -59,7 +59,8 @@
          :color "#81a1c1"
          :size "48px")
 
- ;; Text above the clock.
+ ;; Text at the top of the login box, one and a half times the size of
+ ;; the other text there.
  :greeting "Welcome"
 
  ;; Each command is a list of strings, run when its button is clicked.

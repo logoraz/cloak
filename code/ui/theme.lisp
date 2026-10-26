@@ -14,9 +14,12 @@
   (:documentation "Look of the greeter: CSS made from the config, the cursor
 theme, and the wallpaper-only window shown on outputs without the form.
 
-The CSS uses three style classes. A window that covers an output has
-cloak-window, the login box has cloak-form, the clock has cloak-clock,
-and an error message has cloak-error."))
+The CSS uses these style classes. A window that covers an output has
+cloak-window, the login box has cloak-form, and the greeting in it has
+cloak-greeting. The clock has cloak-clock and the notice under the form
+has cloak-notice, with cloak-error added for an error message. The Login
+and Cancel buttons have cloak-login and cloak-cancel; the box of the power
+buttons has cloak-power, and its buttons cloak-reboot and cloak-poweroff."))
 
 (in-package #:cloak/ui/theme)
 
@@ -28,8 +31,26 @@ and an error message has cloak-error."))
 wins, so the file named by --style overrides the config's :css file, which
 overrides the theme made from the config.")
 
-(defparameter *error-color* "#bf616a"
-  "The color of error messages.")
+(defparameter *error-color* "#d08770"
+  "The color of error messages, nord orange.")
+
+(defparameter *light-text* "#eceff4"
+  "The text color on the dark buttons, the brightest white of nord.")
+
+(defparameter *dark-text* "#2e3440"
+  "The text color on the light buttons, the darkest color of nord.")
+
+(defparameter *login-color* "#5e81ac"
+  "The background of the Login button, nord blue.")
+
+(defparameter *cancel-color* "#4c566a"
+  "The background of the Cancel button, a nord gray.")
+
+(defparameter *reboot-color* "#ebcb8b"
+  "The background of the Reboot button, nord yellow.")
+
+(defparameter *poweroff-color* "#bf616a"
+  "The background of the Power off button, nord red.")
 
 (defun escape-css (string)
   "Return STRING with its backslashes and double quotes escaped, for use
@@ -86,6 +107,13 @@ by FIT, :cover, :contain or :fill. Return nil if PATH is nil."
           "background-position: center"
           "background-repeat: no-repeat")))
 
+(defun button-rule (selector background text)
+  "Return the CSS rule that gives the buttons matching SELECTOR the color
+BACKGROUND and the text color TEXT."
+  (css-rule selector
+            (format nil "background: ~A" background)
+            (format nil "color: ~A" text)))
+
 (defun theme-css (config)
   "Return the CSS for the theme in CONFIG, as a string."
   (let ((background (cfg:config-ref config :theme :background))
@@ -112,11 +140,29 @@ by FIT, :cover, :contain or :fill. Return nil if PATH is nil."
                (format nil "font-family: \"~A\"" (escape-css font)))
      (css-rule ".cloak-form entry"
                (format nil "background-color: ~A" (css-color foreground 0.08)))
-     (css-rule ".cloak-form .cloak-clock"
+     (css-rule ".cloak-form .cloak-greeting"
+               "font-size: 150%")
+     (button-rule ".cloak-form button.cloak-login"
+                  *login-color* *light-text*)
+     (button-rule ".cloak-form button.cloak-cancel"
+                  *cancel-color* *light-text*)
+     (css-rule ".cloak-clock"
                (format nil "color: ~A" clock-color)
-               (format nil "font-size: ~A" clock-size))
+               (format nil "font-size: ~A" clock-size)
+               (format nil "font-family: \"~A\"" (escape-css font)))
+     (css-rule ".cloak-notice"
+               (format nil "color: ~A" foreground)
+               (format nil "font-family: \"~A\"" (escape-css font))
+               (format nil "min-height: ~A" clock-size))
      (css-rule ".cloak-error"
-               (format nil "color: ~A" *error-color*)))))
+               (format nil "color: ~A" *error-color*))
+     (css-rule ".cloak-power button"
+               (format nil "font-family: \"~A\"" (escape-css font))
+               "min-width: 8em")
+     (button-rule ".cloak-power button.cloak-reboot"
+                  *reboot-color* *dark-text*)
+     (button-rule ".cloak-power button.cloak-poweroff"
+                  *poweroff-color* *light-text*))))
 
 (defun add-css (css priority)
   "Add the CSS text to the default display, at the style PRIORITY."

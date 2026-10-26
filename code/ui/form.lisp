@@ -8,6 +8,7 @@
   (:use #:cl)
   (:import-from #:gtk
                 #:+align-center+
+                #:+align-end+
                 #:+orientation-horizontal+
                 #:+orientation-vertical+
                 #:box-append
@@ -20,13 +21,17 @@
                 #:make-button
                 #:make-drop-down
                 #:make-label
+                #:make-overlay
                 #:make-password-entry
+                #:overlay-add-overlay
+                #:overlay-child
                 #:password-entry-show-peek-icon-p
                 #:run-in-main-event-loop
                 #:timeout-add-seconds
                 #:widget-add-css-class
                 #:widget-grab-focus
                 #:widget-halign
+                #:widget-margin-bottom
                 #:widget-remove-css-class
                 #:widget-sensitive-p
                 #:widget-visible-p
@@ -92,6 +97,10 @@ progress, as a cons."))
             :documentation "The GREETER this form belongs to.")
    (box :initform nil :accessor form-box
         :documentation "The top widget, put in the window.")
+   (login-button :initform nil :accessor form-login-button
+                 :documentation "The button that sends the password.")
+   (cancel-button :initform nil :accessor form-cancel-button
+                  :documentation "The button that drops the attempt.")
    (avatar :initform nil :accessor form-avatar
            :documentation "The avatar of the selected user.")
    (user-picker :initform nil :accessor form-user-picker)
@@ -99,7 +108,8 @@ progress, as a cons."))
    (entry :initform nil :accessor form-entry
           :documentation "The password entry.")
    (status :initform nil :accessor form-status
-           :documentation "The label for prompts and errors.")
+           :documentation "The notice label under the form, for prompts
+and errors.")
    (clock :initform nil :accessor form-clock)
    (alive :initform t :accessor form-alive
           :documentation "True until the window is destroyed."))
@@ -231,8 +241,8 @@ gets the initials of their login name."
           (and mine (avatar-texture (cfg:config-ref config :user :avatar))))))
 
 (defun show-status (form text &optional error-p)
-  "Show TEXT under the password entry of FORM, styled as an error if ERROR-P
-is true."
+  "Show TEXT in the notice under the login box of FORM, styled as an error
+if ERROR-P is true."
   (let ((label (form-status form)))
     (setf (label-text label) text)
     (if error-p
@@ -240,11 +250,14 @@ is true."
         (widget-remove-css-class label "cloak-error"))))
 
 (defun set-busy (form busy)
-  "Lock the pickers and the password entry of FORM while BUSY is true, and
-unlock them, with the focus on the entry, when it is false."
+  "Lock the pickers, the password entry and the Login and Cancel buttons of
+FORM while BUSY is true, and unlock them, with the focus on the entry, when
+it is false."
   (dolist (widget (list (form-user-picker form)
                         (form-session-picker form)
-                        (form-entry form)))
+                        (form-entry form)
+                        (form-login-button form)
+                        (form-cancel-button form)))
     (setf (widget-sensitive-p widget) (not busy)))
   (unless busy
     (widget-grab-focus (form-entry form))))
@@ -261,23 +274,34 @@ unlock them, with the focus on the entry, when it is false."
     (error (condition)
       (log:log-message "form: command ~S failed: ~A" cmd condition))))
 
-(defun make-power-button (label cmd)
-  "Return a button named LABEL that runs the command CMD."
+(defun make-action-button (label style function)
+  "Return a button named LABEL, with the style class STYLE, that calls
+FUNCTION, which takes no arguments, when it is clicked."
   (let ((button (make-button :label label)))
+    (widget-add-css-class button style)
     (connect button "clicked"
                  (lambda (button)
                    (declare (ignore button))
-                   (run-command cmd)))
+                   (funcall function)))
     button))
 
 (defun build-form (greeter)
-  "Build the widgets of a login form for GREETER and return the FORM."
+  "Build the widgets of a login form for GREETER and return the FORM.
+The top widget is an overlay. Its base is a centered column of the clock,
+the login box and the notice; the box of the power buttons floats at the
+bottom."
   (let* ((config (greeter-config greeter))
          (form (make-instance 'form :greeter greeter))
+         (root (make-overlay))
+         (column (make-box :orientation +orientation-vertical+
+                           :spacing 20))
          (box (make-box :orientation +orientation-vertical+
+                        :spacing 10))
+         (actions (make-box :orientation +orientation-horizontal+
                             :spacing 10))
          (power (make-box :orientation +orientation-horizontal+
-                              :spacing 10))
+                          :spacing 10))
+         (greeting (make-label :str (cfg:config-ref config :greeting)))
          (user (initial-user greeter))
          (user-picker (make-picker (user-names greeter)
                                    (name-index user (user-names greeter))))
@@ -286,7 +310,7 @@ unlock them, with the focus on the entry, when it is false."
                           (name-index (initial-session greeter user)
                                       (session-names greeter))))
          (entry (make-password-entry)))
-    (setf (form-box form) box
+    (setf (form-box form) root
           (form-avatar form) (make-avatar :size *avatar-size*
                                           :text ""
                                           :show-initials t)
@@ -294,15 +318,27 @@ unlock them, with the focus on the entry, when it is false."
           (form-session-picker form) session-picker
           (form-entry form) entry
           (form-status form) (make-label :str "")
-          (form-clock form) (make-label :str ""))
+          (form-clock form) (make-label :str "")
+          (form-login-button form)
+          (make-action-button "Login" "cloak-login"
+                              (lambda () (submit form)))
+          (form-cancel-button form)
+          (make-action-button "Cancel" "cloak-cancel"
+                              (lambda () (cancel form))))
     (widget-add-css-class box "cloak-form")
+    (widget-add-css-class greeting "cloak-greeting")
+    (widget-add-css-class (form-clock form) "cloak-clock")
+    (widget-add-css-class (form-status form) "cloak-notice")
+    (widget-add-css-class power "cloak-power")
     (setf (password-entry-show-peek-icon-p entry) t)
     (when (cfg:config-ref config :session :command)
       (setf (widget-visible-p session-picker) nil))
-    (setf (widget-halign power) +align-center+)
-    (widget-add-css-class (form-clock form) "cloak-clock")
-    (setf (widget-halign box) +align-center+
-          (widget-valign box) +align-center+)
+    (setf (widget-halign column) +align-center+
+          (widget-valign column) +align-center+
+          (widget-halign actions) +align-end+
+          (widget-halign power) +align-center+
+          (widget-valign power) +align-end+
+          (widget-margin-bottom power) 30)
     (connect user-picker "notify::selected"
                  (lambda (picker pspec)
                    (declare (ignore picker pspec))
@@ -312,22 +348,30 @@ unlock them, with the focus on the entry, when it is false."
                  (lambda (entry)
                    (declare (ignore entry))
                    (submit form)))
+    (box-append actions (form-cancel-button form))
+    (box-append actions (form-login-button form))
     (box-append power
-                    (make-power-button
-                     "Reboot" (cfg:config-ref config :commands :reboot)))
+                (make-action-button
+                 "Reboot" "cloak-reboot"
+                 (lambda ()
+                   (run-command (cfg:config-ref config :commands :reboot)))))
     (box-append power
-                    (make-power-button
-                     "Power off" (cfg:config-ref config :commands :poweroff)))
-    (dolist (widget (list (make-label
-                           :str (cfg:config-ref config :greeting))
-                          (form-clock form)
+                (make-action-button
+                 "Power off" "cloak-poweroff"
+                 (lambda ()
+                   (run-command
+                    (cfg:config-ref config :commands :poweroff)))))
+    (dolist (widget (list greeting
                           (form-avatar form)
                           user-picker
                           session-picker
                           entry
-                          (form-status form)
-                          power))
+                          actions))
       (box-append box widget))
+    (dolist (widget (list (form-clock form) box (form-status form)))
+      (box-append column widget))
+    (setf (overlay-child root) column)
+    (overlay-add-overlay root power)
     (update-avatar form)
     (update-clock form)
     (timeout-add-seconds 1 (lambda ()
@@ -349,6 +393,20 @@ as an error."
       (setf (editable-text (form-entry form)) "")
       (show-status form text t)
       (set-busy form nil))))
+
+(defun cancel (form)
+  "Handle the Cancel button of FORM: drop the prompt that waits, if any, by
+cancelling the session with greetd, and clear the entry and the notice."
+  (let* ((greeter (form-greeter form))
+         (login (greeter-login greeter)))
+    (when (and login (greeter-awaiting greeter))
+      (setf (greeter-awaiting greeter) nil)
+      (handler-case (lgn:cancel-login login)
+        (error (condition)
+          (log:log-message "form: ~A" condition))))
+    (setf (editable-text (form-entry form)) "")
+    (show-status form "")
+    (set-busy form nil)))
 
 (defgeneric submit (form)
   (:documentation "Handle Enter in the password entry of FORM."))
