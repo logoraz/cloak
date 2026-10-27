@@ -128,9 +128,9 @@ pointer and darker still while pressed."
              (format nil "color: ~A" text)
              "transition: background 150ms")
    (css-rule (format nil "~A:hover" selector)
-             (format nil "background: ~A" (shade background 0.9)))
+             (format nil "background: ~A" (shade background 0.8)))
    (css-rule (format nil "~A:active" selector)
-             (format nil "background: ~A" (shade background 0.8)))))
+             (format nil "background: ~A" (shade background 0.6)))))
 
 (defun theme-css (config)
   "Return the CSS for the theme in CONFIG, as a string."
@@ -171,10 +171,10 @@ pointer and darker still while pressed."
                (format nil "font-family: \"~A\"" (escape-css font)))
      (css-rule ".cloak-notice"
                (format nil "color: ~A" foreground)
-               (format nil "font-family: \"~A\"" (escape-css font))
-               (format nil "min-height: ~A" clock-size))
+               (format nil "font-family: \"~A\"" (escape-css font)))
      (css-rule ".cloak-error"
-               (format nil "color: ~A" *error-color*))
+               (format nil "color: ~A" *error-color*)
+               "font-size: 150%")
      (css-rule ".cloak-power button"
                (format nil "font-family: \"~A\"" (escape-css font))
                "min-width: 8em")

@@ -9,9 +9,13 @@
   (:import-from #:gtk
                 #:+align-center+
                 #:+align-end+
+                #:+align-start+
                 #:+orientation-horizontal+
                 #:+orientation-vertical+
                 #:box-append
+                #:center-box-center-widget
+                #:center-box-start-widget
+                #:center-box-end-widget
                 #:connect
                 #:drop-down-selected
                 #:editable-text
@@ -19,6 +23,7 @@
                 #:make-application-window
                 #:make-box
                 #:make-button
+                #:make-center-box
                 #:make-drop-down
                 #:make-label
                 #:make-overlay
@@ -32,12 +37,13 @@
                 #:widget-grab-focus
                 #:widget-halign
                 #:widget-margin-bottom
+                #:widget-margin-top
                 #:widget-remove-css-class
                 #:widget-sensitive-p
                 #:widget-visible-p
                 #:widget-valign
-                #:window-child
-                #:window-focus)
+                #:widget-vexpand-p
+                #:window-child)
   (:import-from #:gio
                 #:application-quit)
   (:import-from #:adw
@@ -287,20 +293,19 @@ FUNCTION, which takes no arguments, when it is clicked."
 
 (defun build-form (greeter)
   "Build the widgets of a login form for GREETER and return the FORM.
-The top widget is an overlay. Its base is a centered column of the clock,
-the login box and the notice; the box of the power buttons floats at the
-bottom."
+The top widget is an overlay. Its base is a vertical center box with the
+clock above, the login box in the middle and the notice below; the box of
+the power buttons floats at the bottom."
   (let* ((config (greeter-config greeter))
          (form (make-instance 'form :greeter greeter))
          (root (make-overlay))
-         (column (make-box :orientation +orientation-vertical+
-                           :spacing 20))
+         (column (make-center-box :orientation +orientation-vertical+))
          (box (make-box :orientation +orientation-vertical+
                         :spacing 10))
          (actions (make-box :orientation +orientation-horizontal+
                             :spacing 10))
          (power (make-box :orientation +orientation-horizontal+
-                          :spacing 10))
+                          :spacing 20))
          (greeting (make-label :str (cfg:config-ref config :greeting)))
          (user (initial-user greeter))
          (user-picker (make-picker (user-names greeter)
@@ -333,8 +338,12 @@ bottom."
     (setf (password-entry-show-peek-icon-p entry) t)
     (when (cfg:config-ref config :session :command)
       (setf (widget-visible-p session-picker) nil))
-    (setf (widget-halign column) +align-center+
-          (widget-valign column) +align-center+
+    (setf (widget-halign box) +align-center+
+          (widget-valign (form-clock form)) +align-center+
+          (widget-vexpand-p (form-clock form)) t
+          (widget-valign (form-status form)) +align-start+
+          (widget-vexpand-p (form-status form)) t
+          (widget-margin-top (form-status form)) 20
           (widget-halign actions) +align-end+
           (widget-halign power) +align-center+
           (widget-valign power) +align-end+
@@ -357,7 +366,7 @@ bottom."
                    (run-command (cfg:config-ref config :commands :reboot)))))
     (box-append power
                 (make-action-button
-                 "Power off" "cloak-poweroff"
+                 "Power Off" "cloak-poweroff"
                  (lambda ()
                    (run-command
                     (cfg:config-ref config :commands :poweroff)))))
@@ -368,8 +377,9 @@ bottom."
                           entry
                           actions))
       (box-append box widget))
-    (dolist (widget (list (form-clock form) box (form-status form)))
-      (box-append column widget))
+    (setf (center-box-start-widget column) (form-clock form)
+          (center-box-center-widget column) box
+          (center-box-end-widget column) (form-status form))
     (setf (overlay-child root) column)
     (overlay-add-overlay root power)
     (update-avatar form)
@@ -498,7 +508,7 @@ user picked."
                          &rest args)
   "Report a failed login and unlock the form."
   (log:log-message "login failed: ~A" (first args))
-  (reset-login greeter "Login failed. Try again."))
+  (reset-login greeter "Login failed. Please try again."))
 
 (defmethod handle-event ((greeter greeter) (kind (eql :error)) &rest args)
   "Report an error from greetd and unlock the form."
@@ -546,8 +556,12 @@ form. The form becomes the one on screen until its window is destroyed."
                    :application (greeter-app greeter))))
          (form (build-form greeter)))
     (setf (greeter-form greeter) form
-          (window-child window) (form-box form)
-          (window-focus window) (form-entry form))
+          (window-child window) (form-box form))
+    ;; Immediately put focus on the password entry field
+    (connect window "map"
+             (lambda (window)
+               (declare (ignore window))
+               (widget-grab-focus (form-entry form))))
     (connect window "destroy"
                  (lambda (window)
                    (declare (ignore window))
