@@ -28,6 +28,7 @@
                 #:make-label
                 #:make-overlay
                 #:make-password-entry
+                #:orientable-orientation
                 #:overlay-add-overlay
                 #:overlay-child
                 #:password-entry-show-peek-icon-p
@@ -299,7 +300,7 @@ the power buttons floats at the bottom."
   (let* ((config (greeter-config greeter))
          (form (make-instance 'form :greeter greeter))
          (root (make-overlay))
-         (column (make-center-box :orientation +orientation-vertical+))
+         (column (make-center-box))
          (box (make-box :orientation +orientation-vertical+
                         :spacing 10))
          (actions (make-box :orientation +orientation-horizontal+
@@ -338,7 +339,8 @@ the power buttons floats at the bottom."
     (setf (password-entry-show-peek-icon-p entry) t)
     (when (cfg:config-ref config :session :command)
       (setf (widget-visible-p session-picker) nil))
-    (setf (widget-halign box) +align-center+
+    (setf (orientable-orientation column) +orientation-vertical+
+          (widget-halign box) +align-center+
           (widget-valign (form-clock form)) +align-center+
           (widget-vexpand-p (form-clock form)) t
           (widget-valign (form-status form)) +align-start+
