@@ -1,15 +1,27 @@
 # cloak
 
-Native GTK4 greetd greeter in Common Lisp.
 
-- One window per monitor: the login form on the primary one, the
-  wallpaper on the rest, following monitors as they come and go
-- Themed from one s-expression file: colors, transparency, wallpaper,
-  font, cursor, clock and avatar
-- Lists the users and Wayland sessions of the system, and remembers the
-  last login
-- Built for GuixOS, usable on any system with greetd and sway
+A highly configurable GTK4 greetd greeter, written in Common Lisp.
 
+ - Looks good out of the box, with a Nord theme as the default
+ - One s-expression file configures everything
+ - Themes colors, transparency, wallpaper, font, cursor, clock and avatar
+ - Multi-monitor: the form on your primary, wallpaper on the rest
+ - Custom CSS for anything the config does not cover
+ - Built for GuixOS; runs on any system with greetd and sway
+
+Early development; expect changes.
+
+
+<p align="center">
+  <img src="docs/screenshots/cloak.png"
+       width="85%" vspace="15" align="absmiddle" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/cloak-error.png"
+       width="85%" vspace="15" align="absmiddle" />
+</p>
 
 ## Requirements
 
@@ -53,6 +65,10 @@ Then use the service in your operating system:
 ```
 
 Fields left unset keep cloak's defaults.
+
+For a complete setup, including the sway configuration
+(`%greetd-conf`), see my [guixos](https://codeberg.org/logoraz/guixos)
+repository.
 
 ### Other systems
 
@@ -123,3 +139,8 @@ Build the package from a checkout with
 ```
 
 ↳ [LICENSE](LICENSE)
+
+<p align="center">
+  <img src="docs/screenshots/lisp-icon-sm.svg"
+       height="150" vspace="15" align="absmiddle" />
+</p>
