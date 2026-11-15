@@ -1,9 +1,3 @@
-;;;; SPDX-License-Identifier: LGPL-2.1-only WITH LLGPL
-;;;; Copyright (C) 2026 Erik P Almaraz
-;;;;
-;;;; Licensed under the LGPL-2.1-only with the LLGPL preamble;
-;;;; see the LICENSE file in this repository.
-
 (defpackage #:cloak/tests/base
   (:use #:cl #:5am
         #:cloak/base/greetd-ipc)
